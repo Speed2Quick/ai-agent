@@ -2,7 +2,7 @@ import os
 import argparse
 from dotenv import load_dotenv
 from google import genai
-from google.genai.live import _api_module
+from google.genai import types
 
 def main():
 
@@ -19,11 +19,16 @@ def main():
     #get the users prompt from the CL
     parser = argparse.ArgumentParser(description="Users prompt to the chatbot")
     parser.add_argument("user_prompt", type=str, help="Prompt to the chatbot")
+
+    #toggle verbose
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+
     args = parser.parse_args()
     user_prompt = args.user_prompt
 
-    #generate the response
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=args.user_prompt)
+    #store the prompt and generate the response
+    messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
+    response = client.models.generate_content(model="gemini-2.5-flash", contents=messages)
 
     if response is None:
         raise RuntimeError("The API generate content request failed")
@@ -32,11 +37,14 @@ def main():
     user_prompt_tokens = response.usage_metadata.prompt_token_count
     response_tokens = response.usage_metadata.candidates_token_count
     
-    
-    print(f"User prompt: {user_prompt}")
-    print(f"Prompt tokens: {user_prompt_tokens}\n")
-    print(f"Response: {response.text}")
-    print(f"Response tokens: {response_tokens}")
+    if args.verbose:
+        print(f"\nUser prompt: {user_prompt}")
+        print(f"Prompt tokens: {user_prompt_tokens}\n")
+        print(f"Response: {response.text}")
+        print(f"Response tokens: {response_tokens}")
+    else:
+        print(f"\nResponse: {response.text}")
+
 
 
 if __name__ == "__main__":
